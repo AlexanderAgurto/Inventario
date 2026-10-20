@@ -1,0 +1,33 @@
+<h1>Inventario</h1>
+
+<p>Valor total del inventario: {{ totalValue() }}</p>
+
+<!-- formulario para crear productos -->
+
+<table>
+  <thead>
+    <tr>
+      <th>SKU</th>
+      <th>Nombre</th>
+      <th>Categoría</th>
+      <th>Precio</th>
+      <th>Stock</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (p of products(); track p._id) {
+      <tr>
+        <td>{{ p.sku }}</td>
+        <td>{{ p.name }}</td>
+        <td>{{ p.category }}</td>
+        <td>{{ p.price }}</td>
+        <td>{{ p.stock }}</td>
+        <td>
+          <button (click)="increase(p)">+1</button>
+          <button (click)="remove(p._id)">Eliminar</button>
+        </td>
+      </tr>
+    }
+  </tbody>
+</table>

@@ -1,0 +1,107 @@
+[
+  {
+    "sku": "TEC-001",
+    "name": "Teclado mecánico",
+    "category": "Periféricos",
+    "price": 45.9,
+    "stock": 25
+  },
+  {
+    "sku": "MOU-002",
+    "name": "Mouse inalámbrico",
+    "category": "Periféricos",
+    "price": 19.5,
+    "stock": 40
+  },
+  {
+    "sku": "MON-003",
+    "name": "Monitor 24 pulgadas",
+    "category": "Pantallas",
+    "price": 129.99,
+    "stock": 8
+  },
+  {
+    "sku": "CAB-004",
+    "name": "Cable HDMI 2m",
+    "category": "Cables",
+    "price": 7.25,
+    "stock": 120
+  },
+  {
+    "sku": "LAP-005",
+    "name": "Laptop 14 pulgadas",
+    "category": "Computadores",
+    "price": 749,
+    "stock": 5
+  },
+  {
+    "sku": "HDS-006",
+    "name": "Audífonos con micrófono",
+    "category": "Audio",
+    "price": 32.8,
+    "stock": 0
+  },
+  {
+    "sku": "WEB-007",
+    "name": "Webcam HD",
+    "category": "Periféricos",
+    "price": 28.4,
+    "stock": 15
+  },
+  {
+    "sku": "USB-008",
+    "name": "Memoria USB 64GB",
+    "category": "Almacenamiento",
+    "price": 9.99,
+    "stock": 200
+  },
+  {
+    "sku": "SSD-009",
+    "name": "Disco SSD 1TB",
+    "category": "Almacenamiento",
+    "price": 89.5,
+    "stock": 12
+  },
+  {
+    "sku": "HUB-010",
+    "name": "Hub USB-C 7 puertos",
+    "category": "Accesorios",
+    "price": 24.75,
+    "stock": 30
+  },
+  {
+    "sku": "PAD-011",
+    "name": "Mousepad XL",
+    "category": "Accesorios",
+    "price": 12,
+    "stock": 0
+  },
+  {
+    "sku": "PRT-012",
+    "name": "Impresora multifunción",
+    "category": "Impresión",
+    "price": 159,
+    "stock": 3
+  },
+  {
+    "sku": "TON-013",
+    "name": "Tóner negro",
+    "category": "Impresión",
+    "price": 54.3,
+    "stock": 9
+  },
+  {
+    "sku": "BAG-014",
+    "name": "Maletín para laptop",
+    "category": "Accesorios",
+    "price": 35,
+    "stock": 18
+  },
+  {
+    "sku": "LMP-015",
+    "name": "Lámpara de escritorio LED",
+    "category": "Accesorios",
+    "price": 21.9,
+    "stock": 22
+  }
+]
