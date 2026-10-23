@@ -1,12 +1,13 @@
-const { Router } = require('express');
-const controller = require('../controllers/products.controller');
+import { Router } from 'express';
+import * as controller from '../controllers/products.controller.js';
+import { asyncHandler } from '../middleware/async-handler.js';
 
 const router = Router();
 
-router.get('/', controller.list);
-router.get('/:id', controller.getById);
-router.post('/', controller.create);
-router.patch('/:id/stock', controller.adjustStock);
-router.delete('/:id', controller.remove);
+router.get('/', asyncHandler(controller.list));
+router.get('/:id', asyncHandler(controller.getById));
+router.post('/', asyncHandler(controller.create));
+router.patch('/:id/stock', asyncHandler(controller.adjustStock));
+router.delete('/:id', asyncHandler(controller.remove));
 
-module.exports = router;
+export default router;

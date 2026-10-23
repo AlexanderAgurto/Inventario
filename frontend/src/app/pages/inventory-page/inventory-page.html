@@ -1,33 +1,136 @@
-<h1>Inventario</h1>
+<main class="min-h-screen bg-slate-100 px-4 py-8 sm:px-6 lg:px-8">
+  <div class="mx-auto max-w-7xl space-y-8">
+    <header class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <p class="text-sm font-semibold uppercase tracking-[0.18em] text-indigo-600">Control de existencias</p>
+        <h1 class="mt-2 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">Inventario</h1>
+        <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+          Consulta los productos y revisa sus existencias desde un solo lugar.
+        </p>
+      </div>
 
-<p>Valor total del inventario: {{ totalValue() }}</p>
+      <section class="w-full rounded-2xl border border-indigo-100 bg-white p-5 shadow-sm sm:w-auto sm:min-w-64" aria-label="Valor total del inventario">
+        <p class="text-sm font-medium text-slate-500">Valor total del inventario</p>
+        <p class="mt-2 text-3xl font-bold tabular-nums text-slate-950">{{ totalValue() }}</p>
+      </section>
+    </header>
 
-<!-- formulario para crear productos -->
+    <section class="rounded-xl border border-slate-200 bg-white p-5 sm:p-6" aria-labelledby="create-product-heading">
+      <div class="mb-5">
+        <h2 id="create-product-heading" class="text-lg font-semibold text-slate-900">Agregar producto</h2>
+        <p class="mt-1 text-sm text-slate-500">Completa los datos para registrar un producto nuevo.</p>
+      </div>
 
-<table>
-  <thead>
+      @if (createSuccess()) {
+        <p class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800" role="status" aria-live="polite">
+          {{ createSuccess() }}
+        </p>
+      }
+      @if (createError()) {
+        <p class="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800" role="alert">
+          {{ createError() }}
+        </p>
+      }
+
+      <form [formGroup]="productForm" (ngSubmit)="createProduct()" novalidate>
+        <div class="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-2 xl:grid-cols-5">
+          <div>
+            <label for="product-sku" class="block text-sm font-medium text-slate-700">SKU <span aria-hidden="true">*</span></label>
+            <input id="product-sku" type="text" formControlName="sku" maxlength="64" autocomplete="off" class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/20" [attr.aria-invalid]="productForm.controls.sku.touched && productForm.controls.sku.invalid" />
+            @if (productForm.controls.sku.touched && productForm.controls.sku.hasError('required')) {
+              <p class="mt-1 text-xs text-rose-700">El SKU es obligatorio.</p>
+            } @else if (productForm.controls.sku.touched && productForm.controls.sku.hasError('whitespace')) {
+              <p class="mt-1 text-xs text-rose-700">El SKU no puede contener solo espacios.</p>
+            } @else if (productForm.controls.sku.touched && productForm.controls.sku.hasError('maxlength')) {
+              <p class="mt-1 text-xs text-rose-700">El SKU admite hasta 64 caracteres.</p>
+            }
+          </div>
+
+          <div>
+            <label for="product-name" class="block text-sm font-medium text-slate-700">Nombre <span aria-hidden="true">*</span></label>
+            <input id="product-name" type="text" formControlName="name" maxlength="120" autocomplete="off" class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/20" [attr.aria-invalid]="productForm.controls.name.touched && productForm.controls.name.invalid" />
+            @if (productForm.controls.name.touched && productForm.controls.name.hasError('required')) {
+              <p class="mt-1 text-xs text-rose-700">El nombre es obligatorio.</p>
+            } @else if (productForm.controls.name.touched && productForm.controls.name.hasError('whitespace')) {
+              <p class="mt-1 text-xs text-rose-700">El nombre no puede contener solo espacios.</p>
+            } @else if (productForm.controls.name.touched && productForm.controls.name.hasError('maxlength')) {
+              <p class="mt-1 text-xs text-rose-700">El nombre admite hasta 120 caracteres.</p>
+            }
+          </div>
+
+          <div>
+            <label for="product-category" class="block text-sm font-medium text-slate-700">Categoría <span class="font-normal text-slate-500">(opcional)</span></label>
+            <input id="product-category" type="text" formControlName="category" maxlength="120" class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/20" [attr.aria-invalid]="productForm.controls.category.touched && productForm.controls.category.invalid" />
+            @if (productForm.controls.category.touched && productForm.controls.category.hasError('maxlength')) {
+              <p class="mt-1 text-xs text-rose-700">La categoría admite hasta 120 caracteres.</p>
+            }
+          </div>
+
+          <div>
+            <label for="product-price" class="block text-sm font-medium text-slate-700">Precio <span aria-hidden="true">*</span></label>
+            <input id="product-price" type="number" formControlName="price" min="0" step="0.01" inputmode="decimal" class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/20" [attr.aria-invalid]="productForm.controls.price.touched && productForm.controls.price.invalid" />
+            @if (productForm.controls.price.touched && productForm.controls.price.hasError('required')) {
+              <p class="mt-1 text-xs text-rose-700">El precio es obligatorio.</p>
+            } @else if (productForm.controls.price.touched && productForm.controls.price.hasError('finiteNonNegative')) {
+              <p class="mt-1 text-xs text-rose-700">Ingresa un precio numérico finito igual o mayor que cero.</p>
+            }
+          </div>
+
+          <div>
+            <label for="product-stock" class="block text-sm font-medium text-slate-700">Stock inicial <span class="font-normal text-slate-500">(opcional)</span></label>
+            <input id="product-stock" type="number" formControlName="stock" min="0" step="1" inputmode="numeric" class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/20" [attr.aria-invalid]="productForm.controls.stock.touched && productForm.controls.stock.invalid" />
+            @if (productForm.controls.stock.touched && productForm.controls.stock.hasError('safeInteger')) {
+              <p class="mt-1 text-xs text-rose-700">El stock debe ser un entero no negativo dentro del rango seguro.</p>
+            }
+          </div>
+        </div>
+
+        <div class="mt-5 flex justify-end border-t border-slate-100 pt-4">
+          <button type="submit" [disabled]="isSubmitting()" class="inline-flex min-h-10 items-center justify-center rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white transition hover:bg-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-60">
+            {{ isSubmitting() ? 'Guardando…' : 'Guardar producto' }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" aria-labelledby="products-heading">
+      <div class="border-b border-slate-200 px-5 py-4 sm:px-6">
+        <h2 id="products-heading" class="text-lg font-semibold text-slate-900">Productos</h2>
+        <p class="mt-1 text-sm text-slate-500">Listado de productos registrados en el inventario.</p>
+      </div>
+      <div class="overflow-x-auto">
+<table class="w-full min-w-[720px] border-collapse text-left text-sm">
+  <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
     <tr>
-      <th>SKU</th>
-      <th>Nombre</th>
-      <th>Categoría</th>
-      <th>Precio</th>
-      <th>Stock</th>
-      <th>Acciones</th>
+      <th scope="col" class="px-5 py-3 font-semibold sm:px-6">SKU</th>
+      <th scope="col" class="px-5 py-3 font-semibold">Nombre</th>
+      <th scope="col" class="px-5 py-3 font-semibold">Categoría</th>
+      <th scope="col" class="px-5 py-3 text-right font-semibold">Precio</th>
+      <th scope="col" class="px-5 py-3 text-center font-semibold">Stock</th>
+      <th scope="col" class="px-5 py-3 text-right font-semibold sm:px-6">Acciones</th>
     </tr>
   </thead>
-  <tbody>
+  <tbody class="divide-y divide-slate-100">
     @for (p of products(); track p._id) {
-      <tr>
-        <td>{{ p.sku }}</td>
-        <td>{{ p.name }}</td>
-        <td>{{ p.category }}</td>
-        <td>{{ p.price }}</td>
-        <td>{{ p.stock }}</td>
-        <td>
-          <button (click)="increase(p)">+1</button>
-          <button (click)="remove(p._id)">Eliminar</button>
+      <tr class="transition-colors hover:bg-slate-50/80">
+        <td class="whitespace-nowrap px-5 py-4 font-mono text-xs font-medium text-slate-600 sm:px-6">{{ p.sku }}</td>
+        <td class="px-5 py-4 font-medium text-slate-900">{{ p.name }}</td>
+        <td class="px-5 py-4 text-slate-600">{{ p.category }}</td>
+        <td class="whitespace-nowrap px-5 py-4 text-right tabular-nums text-slate-700">{{ p.price }}</td>
+        <td class="px-5 py-4 text-center">
+          <span class="inline-flex min-w-10 justify-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold tabular-nums text-indigo-700">{{ p.stock }}</span>
+        </td>
+        <td class="px-5 py-4 sm:px-6">
+          <div class="flex justify-end gap-2">
+            <button type="button" class="inline-flex min-h-9 items-center justify-center rounded-lg bg-indigo-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" (click)="increase(p)">+1</button>
+            <button type="button" class="inline-flex min-h-9 items-center justify-center rounded-lg border border-rose-200 bg-white px-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600" (click)="remove(p._id)">Eliminar</button>
+          </div>
         </td>
       </tr>
     }
   </tbody>
 </table>
+      </div>
+    </section>
+  </div>
+</main>

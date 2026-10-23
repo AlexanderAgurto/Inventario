@@ -1,9 +1,12 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
+
+export function resolveMongoUri(env = process.env) {
+  return env.MONGODB_URI || env.MONGO_URI || 'mongodb://127.0.0.1:27017/test';
+}
 
 async function connectDB() {
-  const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/test';
-  await mongoose.connect(uri);
+  await mongoose.connect(resolveMongoUri());
   console.log('MongoDB conectado');
 }
 
-module.exports = connectDB;
+export default connectDB;

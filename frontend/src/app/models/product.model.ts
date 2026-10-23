@@ -9,6 +9,9 @@ export interface Product {
   updatedAt?: string;
 }
 
+export type NewProduct = Pick<Product, 'sku' | 'name' | 'price'> &
+  Partial<Pick<Product, 'category' | 'stock'>>;
+
 export interface ProductPage {
   data: Product[];
   page: number;

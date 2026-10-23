@@ -1,11 +1,16 @@
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../../.env') });
-const mongoose = require('mongoose');
-const Product = require('../models/Product');
-const products = require('./products.json');
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import dotenv from 'dotenv';
+import mongoose from 'mongoose';
+import Product from '../models/Product.js';
+import { resolveMongoUri } from '../config/db.js';
+import products from './products.json' with { type: 'json' };
+
+const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.resolve(currentDirectory, '../../.env') });
 
 async function run() {
-  await mongoose.connect(process.env.MONGO_URI);
+  await mongoose.connect(resolveMongoUri());
   await Product.deleteMany({});
   await Product.insertMany(products);
   console.log(`Seed completado: ${products.length} productos`);

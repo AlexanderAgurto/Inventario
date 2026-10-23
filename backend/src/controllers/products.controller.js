@@ -1,15 +1,18 @@
-const Product = require('../models/Product');
+import Product from '../models/Product.js';
+import { HttpError } from '../errors/http-error.js';
+import {
+  assertValidProductId,
+  buildStockAdjustmentFilter,
+  escapeRegex,
+  parsePagination,
+  parseProductInput,
+  parseStockAdjustment,
+} from '../utils/validation.js';
 
-exports.list = async (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
-
-  const filter = {};
-  if (req.query.search) {
-    filter.name = new RegExp(req.query.search, 'i');
-  }
-
-  const skip = page * limit;
+export const list = async (req, res) => {
+  const { page, limit, search } = parsePagination(req.query);
+  const filter = search ? { name: new RegExp(escapeRegex(search), 'i') } : {};
+  const skip = (page - 1) * limit;
 
   const [data, total] = await Promise.all([
     Product.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
@@ -19,23 +22,39 @@ exports.list = async (req, res) => {
   res.json({ data, page, limit, total });
 };
 
-exports.getById = async (req, res) => {
+export const getById = async (req, res) => {
+  assertValidProductId(req.params.id);
   const product = await Product.findById(req.params.id);
+  if (!product) throw new HttpError(404, 'PRODUCT_NOT_FOUND', 'No se encontró el producto.');
   res.status(200).json(product);
 };
 
-exports.create = async (req, res) => {
-  const product = await Product.create(req.body);
+export const create = async (req, res) => {
+  const product = await Product.create(parseProductInput(req.body));
   res.status(201).json(product);
 };
 
-exports.adjustStock = async (req, res) => {
-  const product = await Product.findById(req.params.id);
-  product.stock += req.body.delta;
+export const adjustStock = async (req, res) => {
+  assertValidProductId(req.params.id);
+  const amount = parseStockAdjustment(req.body);
+  const filter = buildStockAdjustmentFilter(req.params.id, amount);
+
+  const product = await Product.findOneAndUpdate(
+    filter,
+    { $inc: { stock: amount } },
+    { new: true, runValidators: true }
+  );
+  if (!product) {
+    const exists = await Product.exists({ _id: req.params.id });
+    if (!exists) throw new HttpError(404, 'PRODUCT_NOT_FOUND', 'No se encontró el producto.');
+    throw new HttpError(409, 'STOCK_CONFLICT', 'El stock actual no permite aplicar el ajuste solicitado.');
+  }
   res.json(product);
 };
 
-exports.remove = async (req, res) => {
-  await Product.findByIdAndDelete(req.params.id);
+export const remove = async (req, res) => {
+  assertValidProductId(req.params.id);
+  const product = await Product.findByIdAndDelete(req.params.id);
+  if (!product) throw new HttpError(404, 'PRODUCT_NOT_FOUND', 'No se encontró el producto.');
   res.status(204).send();
 };

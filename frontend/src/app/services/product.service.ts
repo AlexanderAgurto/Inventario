@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, map, of } from 'rxjs';
-import { Product, ProductPage } from '../models/product.model';
+import { NewProduct, Product, ProductPage } from '../models/product.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProductService {
@@ -17,7 +17,7 @@ export class ProductService {
       );
   }
 
-  create(product: Omit<Product, '_id'>): Observable<Product> {
+  create(product: NewProduct): Observable<Product> {
     return this.http.post<Product>(this.apiUrl, product);
   }
 
