@@ -1,6 +1,6 @@
-const Product = require('../models/Product');
+import Product from '../models/Product.js';
 
-exports.list = async (req, res) => {
+export const list = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
 
@@ -19,23 +19,23 @@ exports.list = async (req, res) => {
   res.json({ data, page, limit, total });
 };
 
-exports.getById = async (req, res) => {
+export const getById = async (req, res) => {
   const product = await Product.findById(req.params.id);
   res.status(200).json(product);
 };
 
-exports.create = async (req, res) => {
+export const create = async (req, res) => {
   const product = await Product.create(req.body);
   res.status(201).json(product);
 };
 
-exports.adjustStock = async (req, res) => {
+export const adjustStock = async (req, res) => {
   const product = await Product.findById(req.params.id);
   product.stock += req.body.delta;
   res.json(product);
 };
 
-exports.remove = async (req, res) => {
+export const remove = async (req, res) => {
   await Product.findByIdAndDelete(req.params.id);
   res.status(204).send();
 };
