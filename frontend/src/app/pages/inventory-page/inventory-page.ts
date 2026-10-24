@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, WritableSignal, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   NonNullableFormBuilder,
@@ -8,7 +9,8 @@ import {
   ValidatorFn,
   Validators,
 } from '@angular/forms';
-import { interval } from 'rxjs';
+import { finalize, interval } from 'rxjs';
+import { calculateInventoryValue } from '../../legacy/inventory-calc';
 import { Product } from '../../models/product.model';
 import { ProductService } from '../../services/product.service';
 
@@ -37,9 +39,15 @@ const optionalSafeInteger: ValidatorFn = (control: AbstractControl): ValidationE
 export class InventoryPage implements OnInit {
   private readonly productService = inject(ProductService);
   private readonly formBuilder = inject(NonNullableFormBuilder);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly products = signal<Product[]>([]);
+  protected readonly isLoading = signal(true);
+  protected readonly loadError = signal('');
+  protected readonly actionError = signal('');
   protected readonly isSubmitting = signal(false);
+  protected readonly stockUpdatingIds = signal(new Set<string>());
+  protected readonly deletingIds = signal(new Set<string>());
   protected readonly createError = signal('');
   protected readonly createSuccess = signal('');
   protected readonly productForm = this.formBuilder.group({
@@ -50,16 +58,48 @@ export class InventoryPage implements OnInit {
     stock: this.formBuilder.control<number | null>(0, [optionalSafeInteger]),
   });
 
-  // mostrar el valor total del inventario. Ver README.
-  protected readonly totalValue = computed(() => '0.00');
+  protected readonly totalValue = computed(() =>
+    calculateInventoryValue(
+      this.products().map((product) => ({
+        sku: product.sku,
+        qty: product.stock,
+        unitPriceCents: Math.round((product.price + Number.EPSILON) * 100),
+      }))
+    )
+  );
+  private hasLoaded = false;
+  private loadInProgress = false;
 
   ngOnInit(): void {
     this.load();
-    interval(5000).subscribe(() => this.load());
+    interval(5000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.load());
   }
 
   protected load(): void {
-    this.productService.getAll().subscribe((products) => this.products.set(products));
+    if (this.loadInProgress) return;
+    this.loadInProgress = true;
+    if (!this.hasLoaded) this.isLoading.set(true);
+
+    this.productService.getAll().subscribe({
+      next: (products) => {
+        this.products.set(products);
+        this.loadError.set('');
+        this.hasLoaded = true;
+        this.isLoading.set(false);
+        this.loadInProgress = false;
+      },
+      error: (error: HttpErrorResponse) => {
+        this.loadError.set(this.getRequestErrorMessage(error, 'No se pudo cargar el inventario.'));
+        this.hasLoaded = true;
+        this.isLoading.set(false);
+        this.loadInProgress = false;
+      },
+    });
+  }
+
+  protected retryLoad(): void {
+    this.isLoading.set(true);
+    this.load();
   }
 
   protected createProduct(): void {
@@ -102,10 +142,50 @@ export class InventoryPage implements OnInit {
   }
 
   protected increase(product: Product): void {
-    this.productService.adjustStock(product._id, 1).subscribe();
+    if (this.stockUpdatingIds().has(product._id)) return;
+    this.actionError.set('');
+    this.setPending(this.stockUpdatingIds, product._id, true);
+    this.productService.adjustStock(product._id, 1).pipe(
+      finalize(() => this.setPending(this.stockUpdatingIds, product._id, false))
+    ).subscribe({
+      next: (updatedProduct) => {
+        this.products.update((products) =>
+          products.map((current) => current._id === updatedProduct._id ? updatedProduct : current)
+        );
+      },
+      error: (error: HttpErrorResponse) => {
+        this.actionError.set(this.getRequestErrorMessage(error, 'No se pudo actualizar el stock.'));
+      },
+    });
   }
 
   protected remove(id: string): void {
-    this.productService.remove(id);
+    if (this.deletingIds().has(id)) return;
+    this.actionError.set('');
+    this.setPending(this.deletingIds, id, true);
+    this.productService.remove(id).pipe(
+      finalize(() => this.setPending(this.deletingIds, id, false))
+    ).subscribe({
+      next: () => this.products.update((products) => products.filter((product) => product._id !== id)),
+      error: (error: HttpErrorResponse) => {
+        this.actionError.set(this.getRequestErrorMessage(error, 'No se pudo eliminar el producto.'));
+      },
+    });
+  }
+
+  private getRequestErrorMessage(error: HttpErrorResponse, fallback: string): string {
+    const apiMessage = error.error?.error?.message;
+    if (typeof apiMessage === 'string') return apiMessage;
+    if (error.status === 0) return 'No se pudo conectar con el servidor. Comprueba tu conexión e inténtalo de nuevo.';
+    return fallback;
+  }
+
+  private setPending(signalValue: WritableSignal<Set<string>>, id: string, pending: boolean): void {
+    signalValue.update((ids) => {
+      const next = new Set(ids);
+      if (pending) next.add(id);
+      else next.delete(id);
+      return next;
+    });
   }
 }
